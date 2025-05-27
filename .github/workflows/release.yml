@@ -52,21 +52,19 @@ jobs:
             gettext \
             intltool
 
-      - name: Configure build (Linux)
-        if: matrix.target == 'linux'
+      - name: Run autogen.sh
         run: |
-          mkdir -p $BUILD_DIR
-          cd $BUILD_DIR
-          ../autogen.sh
-          ../configure --prefix=$GITHUB_WORKSPACE/$INSTALL_DIR
+          ./autogen.sh
 
-      - name: Configure build (Windows)
-        if: matrix.target == 'windows'
+      - name: Configure build
         run: |
           mkdir -p $BUILD_DIR
           cd $BUILD_DIR
-          ../autogen.sh
-          ../configure --host=x86_64-w64-mingw32 --prefix=$GITHUB_WORKSPACE/$INSTALL_DIR
+          if [ "${{ matrix.target }}" = "linux" ]; then
+            ../configure --prefix=$GITHUB_WORKSPACE/$INSTALL_DIR
+          else
+            ../configure --host=x86_64-w64-mingw32 --prefix=$GITHUB_WORKSPACE/$INSTALL_DIR
+          fi
 
       - name: Compile and install
         run: |
