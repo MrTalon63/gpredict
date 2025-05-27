@@ -14,7 +14,7 @@ jobs:
         target: [linux, windows]
     steps:
       - name: Checkout source code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up environment variables
         run: |
@@ -82,7 +82,7 @@ jobs:
           path: $INSTALL_DIR
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: gpredict-${{ matrix.target }}-${{ github.ref_name }}.zip
           path: gpredict-${{ matrix.target }}-${{ github.ref_name }}.zip
@@ -92,7 +92,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           path: artifacts
 
