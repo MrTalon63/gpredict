@@ -1,0 +1,106 @@
+name: Build and Release Gpredict
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Trigger on version tags like v2.2.1
+  workflow_dispatch:  # Enables manual triggering from the GitHub UI
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [linux, windows]
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v3
+
+      - name: Set up environment variables
+        run: |
+          echo "BUILD_DIR=build-${{ matrix.target }}" >> $GITHUB_ENV
+          echo "INSTALL_DIR=install-${{ matrix.target }}" >> $GITHUB_ENV
+
+      - name: Install dependencies (Linux)
+        if: matrix.target == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            autoconf \
+            automake \
+            libtool \
+            pkg-config \
+            libglib2.0-dev \
+            libgtk-3-dev \
+            libcurl4-gnutls-dev \
+            libgoocanvas-2.0-dev \
+            libhamlib-dev \
+            intltool \
+            gettext
+
+      - name: Install dependencies (Windows)
+        if: matrix.target == 'windows'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            mingw-w64 \
+            autoconf \
+            automake \
+            libtool \
+            pkg-config \
+            gettext \
+            intltool
+
+      - name: Configure build (Linux)
+        if: matrix.target == 'linux'
+        run: |
+          mkdir -p $BUILD_DIR
+          cd $BUILD_DIR
+          ../autogen.sh
+          ../configure --prefix=$GITHUB_WORKSPACE/$INSTALL_DIR
+
+      - name: Configure build (Windows)
+        if: matrix.target == 'windows'
+        run: |
+          mkdir -p $BUILD_DIR
+          cd $BUILD_DIR
+          ../autogen.sh
+          ../configure --host=x86_64-w64-mingw32 --prefix=$GITHUB_WORKSPACE/$INSTALL_DIR
+
+      - name: Compile and install
+        run: |
+          cd $BUILD_DIR
+          make -j$(nproc)
+          make install
+
+      - name: Archive binaries
+        uses: thedoctor0/zip-release@0.7.6
+        with:
+          type: 'zip'
+          filename: 'gpredict-${{ matrix.target }}-${{ github.ref_name }}.zip'
+          path: $INSTALL_DIR
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: gpredict-${{ matrix.target }}-${{ github.ref_name }}.zip
+          path: gpredict-${{ matrix.target }}-${{ github.ref_name }}.zip
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: artifacts
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Gpredict ${{ github.ref_name }}
+          files: artifacts/**/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
