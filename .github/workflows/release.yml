@@ -92,6 +92,7 @@ jobs:
           update: true
           install: >-
             git
+            make
             zip
             mingw-w64-x86_64-gcc
             mingw-w64-x86_64-pkgconf
