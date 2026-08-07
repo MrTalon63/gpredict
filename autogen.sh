@@ -51,8 +51,10 @@ echo "- autoconf."		&& \
   autoconf			&& \
 echo "- automake."		&& \
   automake --add-missing --gnu	&& \
-echo				&& \
-  ./configure "$@"		&& exit 0
+echo
 
-exit 1
+# Allow skipping the configure step (e.g. for out-of-tree builds).
+if test -z "$NOCONFIGURE"; then
+  ./configure "$@"
+fi
 
