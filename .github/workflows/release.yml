@@ -61,6 +61,7 @@ jobs:
             automake \
             libtool \
             pkg-config \
+            libglib2.0-dev \
             gettext \
             intltool
 
