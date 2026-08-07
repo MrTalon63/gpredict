@@ -50,11 +50,19 @@ SCHEMAS = $(MINGW_ROOT)/share/glib-2.0/schemas
 ADWAITA = $(MINGW_ROOT)/share/icons/Adwaita
 
 # Autoversioning from nearest git tag, assumes v<x>.<y> tag format.
+# Falls back to a default version when no tags are available (e.g. CI
+# builds from a shallow clone or a repository without tags).
 
-GITVER := $(shell git describe)
+GITVER := $(shell git describe 2>/dev/null)
+ifeq ($(strip $(GITVER)),)
+GITVER := v0.0.0
+endif
 GITSEP := $(subst -, ,$(GITVER))
 GITTAG := $(word 1,$(GITSEP))
 GITBLD := $(word 2,$(GITSEP))
 GITCOM := $(word 3,$(GITSEP))
 GITMAJ := $(subst v,,$(word 1,$(subst ., ,$(GITTAG))))
 GITMIN := $(word 2,$(subst ., ,$(GITTAG)))
+ifeq ($(strip $(GITBLD)),)
+GITBLD := 0
+endif
