@@ -89,7 +89,7 @@ nicknames = {
 }
 
 urlprefix = "https://celestrak.org/NORAD/elements/gp.php?GROUP="
-urlsuffix = "&FORMAT=tle"
+urlsuffix = "&FORMAT=TLE"
 
 # create working directories if they do not exist
 if not os.path.exists("in"):
