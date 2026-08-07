@@ -1,6 +1,32 @@
+Changes in version 2.5.2 (20 Jul 2026)
 
-Changes in version 2.4 (TBD)
+ - Fixed compilation error on Windows (MSYS64)
+ - Added support for more recent versions of gpsd (#404)
+ - Fixed second rig not connecting (#407)
+ - Fix data race by reloading satellites in the main thread (#409)
+ - Fix some warning messages at program exit
 
+
+Changes in version 2.5.1 (22 March 2026)
+
+- Speed up TLE update when updating from network
+- Fix broken scroll wheel in radio and rotator controllers
+
+
+Changes in version 2.5 (22 March 2026)
+
+- Implemented drawing function using native GTK3/Cairo drawing
+- Automatically detect macOS and set GDK_BACKEND to Quartz
+- Updated Windows build files
+- Fixed potential buffer overflow in transponder update function
+- Updated bundled satellite data
+
+
+Changes in version 2.4 (27 Dec 2025)
+
+- Added option to show solar terminator on the map view
+- Added option to hide satellite names, markers and footprints on map
+- Added option to hide satellite names and marker on polar view
 - Fixed bug that could prevent TLE update to work on Windows
 - Fixed rotator error handling to prevent fake feedback
 - Fixed rotator controller on Windows
@@ -13,11 +39,15 @@ Changes in version 2.4 (TBD)
 - Ensure Azimuth read from rotator is always between 0-360 degrees
 - Ensure rotator limits are respected while tracking
 - Ensure next events are in chronological order
+- Ensure autotrack respects minimum elevation setting
+- Use system font in graphical views
 - Added operational status to list view
 - Restore radio controller cycle time between sessions
 - Restore rotator cycle time and threshold between sessions
 - Require Glib 2.40 or later
+- Support building with GooCanvas 3
 - New module menu icon
+- Updated bundled satellite data
 
 
 Changes in version 2.2 (5 Jan 2018)

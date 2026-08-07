@@ -1,11 +1,8 @@
 # Configuration variables governing the build of gpredict for win32
 
-# pkgconfig path, assumes goocanvas-3.0.0 and gtk+-3.10.4 win32 packages
+# pkgconfig path, assumes gtk+-3.10.4 win32 packages
 # unpacked and paths adjusted (pkg-config files) at the same folder level
 # as gpredict. Downloads used:
-# 
-# http://ftp.gnome.org/pub/GNOME/binaries/win32/goocanvas/3.0/
-# download both: goocanvas-3.0.0-win32.zip, goocanvas-dev-3.0.0-win32.zip
 # 
 # http://win32builder.gnome.org/gtk+-bundle_3.10.4-20131202_win32.zip
 # NB: I had to create new .pc files for both gtk+-3.0.pc and gdk.pc
@@ -32,11 +29,17 @@ MINGW_ROOT=/mingw64
 PKG_CONFIG_PATH = "$(abspath $(MINGW_ROOT)/lib/pkgconfig)"
 
 # binary dependencies to be deployed with gpredict.exe
+# librsvg-2-2.dll and libxml2-16.dll are needed for pixbufloader_svg.dll
+# gspawn-win64-helper.exe and gspawn-win64-helper-console.exe are required for hyperlinks to launch
 BINDEPS = \
 	$(wildcard $(MINGW_ROOT)/bin/*.dll) \
-	$(MINGW_ROOT)/lib/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader-svg.dll \
+	$(MINGW_ROOT)/lib/gdk-pixbuf-2.0/2.10.0/loaders/pixbufloader_svg.dll \
 	$(MINGW_ROOT)/lib/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader-png.dll \
-	$(MINGW_ROOT)/lib/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader-jpeg.dll
+	$(MINGW_ROOT)/lib/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader-jpeg.dll \
+	$(MINGW_ROOT)/bin/librsvg-2-2.dll \
+	$(MINGW_ROOT)/bin/libxml2-16.dll \
+	$(MINGW_ROOT)/bin/gspawn-win64-helper.exe \
+	$(MINGW_ROOT)/bin/gspawn-win64-helper-console.exe
 
 # where to put the loaders.cache file
 LOADERS = lib/gdk-pixbuf-2.0/2.10.0

@@ -84,6 +84,7 @@ static void     gpredict_sig_handler(int sig);
 static gboolean tle_mon_task(gpointer data);
 static void     tle_mon_stop(void);
 static gpointer update_tle_thread(gpointer data);
+static gboolean reload_sats_idle_cb(gpointer data);
 static void     clean_tle(void);
 static void     clean_trsp(void);
 
@@ -105,6 +106,15 @@ int main(int argc, char *argv[])
     bind_textdomain_codeset(PACKAGE, "UTF-8");
     textdomain(PACKAGE);
 #endif
+
+	/* Auto-detect macOS and set GDK backend to Quartz for native rendering */
+#ifdef __APPLE__
+    /* Only set if not already defined by user */
+    if (g_getenv("GDK_BACKEND") == NULL) {
+        g_setenv("GDK_BACKEND", "quartz", 0);
+    }
+#endif
+	
     gtk_init(&argc, &argv);
 
     context = g_option_context_new("");
@@ -548,8 +558,21 @@ static void tle_mon_stop()
     /* if TLE update is running wait until it is finished */
     while (tle_upd_running)
     {
+        /* iterate the main loop so the reload idle callback can run */
+        g_main_context_iteration(NULL, FALSE);
         g_usleep(1000);
     }
+}
+
+/* Reload satellites on the main loop after a TLE update. */
+static gboolean reload_sats_idle_cb(gpointer data)
+{
+    (void)data;
+
+    mod_mgr_reload_sats();
+    tle_upd_running = FALSE;
+
+    return G_SOURCE_REMOVE;
 }
 
 /* Thread function which invokes TLE update */
@@ -559,7 +582,9 @@ static          gpointer update_tle_thread(gpointer data)
 
     tle_upd_running = TRUE;
     tle_update_from_network(TRUE, NULL, NULL, NULL);
-    tle_upd_running = FALSE;
+
+    /* reloading touches GTK, so run it on the main thread, not here */
+    gdk_threads_add_idle(reload_sats_idle_cb, NULL);
 
     return NULL;
 }

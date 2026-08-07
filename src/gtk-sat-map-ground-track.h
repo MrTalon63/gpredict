@@ -27,10 +27,15 @@
 
 #include <glib.h>
 #include <glib/gi18n.h>
-#include <goocanvas.h>
 #include <gtk/gtk.h>
 
 #include "gtk-sat-map.h"
+
+/** Structure to hold line segment data */
+typedef struct {
+    gdouble        *points;     /*!< Array of x,y coordinate pairs */
+    gint            count;      /*!< Number of points in this segment */
+} line_segment_t;
 
 void            ground_track_create(GtkSatMap * satmap, sat_t * sat,
                                     qth_t * qth, sat_map_obj_t * obj);
