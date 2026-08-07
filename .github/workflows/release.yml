@@ -68,7 +68,7 @@ jobs:
         with:
           type: 'zip'
           filename: 'gpredict-linux-${{ env.ARTIFACT_SUFFIX }}.zip'
-          path: $INSTALL_DIR
+          path: ${{ env.INSTALL_DIR }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
