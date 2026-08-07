@@ -4,6 +4,8 @@ on:
   push:
     tags:
       - 'v*.*.*'  # Trigger on version tags like v2.2.1
+    branches:
+      - master  # Trigger on pushes to master for nightly builds
   workflow_dispatch:  # Enables manual triggering from the GitHub UI
 
 jobs:
@@ -15,6 +17,16 @@ jobs:
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
+
+      - name: Determine build type
+        run: |
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            echo "RELEASE_TYPE=release" >> $GITHUB_ENV
+            echo "ARTIFACT_SUFFIX=${{ github.ref_name }}" >> $GITHUB_ENV
+          else
+            echo "RELEASE_TYPE=nightly" >> $GITHUB_ENV
+            echo "ARTIFACT_SUFFIX=nightly-${GITHUB_SHA::8}" >> $GITHUB_ENV
+          fi
 
       - name: Set up environment variables
         run: |
@@ -76,14 +88,14 @@ jobs:
         uses: thedoctor0/zip-release@0.7.6
         with:
           type: 'zip'
-          filename: 'gpredict-${{ matrix.target }}-${{ github.ref_name }}.zip'
+          filename: 'gpredict-${{ matrix.target }}-${{ env.ARTIFACT_SUFFIX }}.zip'
           path: $INSTALL_DIR
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: gpredict-${{ matrix.target }}-${{ github.ref_name }}.zip
-          path: gpredict-${{ matrix.target }}-${{ github.ref_name }}.zip
+          name: gpredict-${{ matrix.target }}-${{ env.ARTIFACT_SUFFIX }}.zip
+          path: gpredict-${{ matrix.target }}-${{ env.ARTIFACT_SUFFIX }}.zip
 
   release:
     needs: build
@@ -94,11 +106,23 @@ jobs:
         with:
           path: artifacts
 
+      - name: Determine release type
+        run: |
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            echo "RELEASE_TYPE=release" >> $GITHUB_ENV
+            echo "RELEASE_TAG=${{ github.ref_name }}" >> $GITHUB_ENV
+          else
+            echo "RELEASE_TYPE=nightly" >> $GITHUB_ENV
+            echo "RELEASE_TAG=nightly" >> $GITHUB_ENV
+          fi
+
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
-          name: Gpredict ${{ github.ref_name }}
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: ${{ env.RELEASE_TYPE == 'nightly' && 'Gpredict nightly' || format('Gpredict {0}', github.ref_name) }}
+          prerelease: ${{ env.RELEASE_TYPE == 'nightly' }}
+          make_latest: ${{ env.RELEASE_TYPE == 'release' }}
           files: artifacts/**/*.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
