@@ -9,11 +9,8 @@ on:
   workflow_dispatch:  # Enables manual triggering from the GitHub UI
 
 jobs:
-  build:
+  build-linux:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        target: [linux, windows]
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
@@ -30,11 +27,10 @@ jobs:
 
       - name: Set up environment variables
         run: |
-          echo "BUILD_DIR=build-${{ matrix.target }}" >> $GITHUB_ENV
-          echo "INSTALL_DIR=install-${{ matrix.target }}" >> $GITHUB_ENV
+          echo "BUILD_DIR=build-linux" >> $GITHUB_ENV
+          echo "INSTALL_DIR=install-linux" >> $GITHUB_ENV
 
-      - name: Install dependencies (Linux)
-        if: matrix.target == 'linux'
+      - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -51,20 +47,6 @@ jobs:
             intltool \
             gettext
 
-      - name: Install dependencies (Windows)
-        if: matrix.target == 'windows'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            mingw-w64 \
-            autoconf \
-            automake \
-            libtool \
-            pkg-config \
-            libglib2.0-dev \
-            gettext \
-            intltool
-
       - name: Run autogen.sh
         run: |
           NOCONFIGURE=1 ./autogen.sh
@@ -73,11 +55,7 @@ jobs:
         run: |
           mkdir -p $BUILD_DIR
           cd $BUILD_DIR
-          if [ "${{ matrix.target }}" = "linux" ]; then
-            ../configure --prefix=$GITHUB_WORKSPACE/$INSTALL_DIR
-          else
-            ../configure --host=x86_64-w64-mingw32 --prefix=$GITHUB_WORKSPACE/$INSTALL_DIR
-          fi
+          ../configure --prefix=$GITHUB_WORKSPACE/$INSTALL_DIR
 
       - name: Compile and install
         run: |
@@ -89,17 +67,62 @@ jobs:
         uses: thedoctor0/zip-release@0.7.6
         with:
           type: 'zip'
-          filename: 'gpredict-${{ matrix.target }}-${{ env.ARTIFACT_SUFFIX }}.zip'
+          filename: 'gpredict-linux-${{ env.ARTIFACT_SUFFIX }}.zip'
           path: $INSTALL_DIR
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: gpredict-${{ matrix.target }}-${{ env.ARTIFACT_SUFFIX }}.zip
-          path: gpredict-${{ matrix.target }}-${{ env.ARTIFACT_SUFFIX }}.zip
+          name: gpredict-linux-${{ env.ARTIFACT_SUFFIX }}.zip
+          path: gpredict-linux-${{ env.ARTIFACT_SUFFIX }}.zip
+
+  build-windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Determine build type
+        run: |
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            echo "RELEASE_TYPE=release" >> $GITHUB_ENV
+            echo "ARTIFACT_SUFFIX=${{ github.ref_name }}" >> $GITHUB_ENV
+          else
+            echo "RELEASE_TYPE=nightly" >> $GITHUB_ENV
+            echo "ARTIFACT_SUFFIX=nightly-${GITHUB_SHA::8}" >> $GITHUB_ENV
+          fi
+
+      - name: Set up MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            git
+            zip
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-pkgconf
+            mingw-w64-x86_64-gtk3
+            mingw-w64-x86_64-glib2
+            mingw-w64-x86_64-librsvg
+            mingw-w64-x86_64-libxml2
+
+      - name: Build Windows binaries
+        run: |
+          cd win32
+          make dist
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gpredict-windows-${{ env.ARTIFACT_SUFFIX }}.zip
+          path: win32/gpredict-*.zip
 
   release:
-    needs: build
+    needs: [build-linux, build-windows]
     runs-on: ubuntu-latest
     steps:
       - name: Download artifacts
