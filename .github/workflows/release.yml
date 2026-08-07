@@ -85,16 +85,6 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v4
 
-      - name: Determine build type
-        run: |
-          if [ "${{ github.ref_type }}" = "tag" ]; then
-            echo "RELEASE_TYPE=release" >> $GITHUB_ENV
-            echo "ARTIFACT_SUFFIX=${{ github.ref_name }}" >> $GITHUB_ENV
-          else
-            echo "RELEASE_TYPE=nightly" >> $GITHUB_ENV
-            echo "ARTIFACT_SUFFIX=nightly-${GITHUB_SHA::8}" >> $GITHUB_ENV
-          fi
-
       - name: Set up MSYS2
         uses: msys2/setup-msys2@v2
         with:
@@ -109,6 +99,16 @@ jobs:
             mingw-w64-x86_64-glib2
             mingw-w64-x86_64-librsvg
             mingw-w64-x86_64-libxml2
+
+      - name: Determine build type
+        run: |
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            echo "RELEASE_TYPE=release" >> $GITHUB_ENV
+            echo "ARTIFACT_SUFFIX=${{ github.ref_name }}" >> $GITHUB_ENV
+          else
+            echo "RELEASE_TYPE=nightly" >> $GITHUB_ENV
+            echo "ARTIFACT_SUFFIX=nightly-${GITHUB_SHA::8}" >> $GITHUB_ENV
+          fi
 
       - name: Build Windows binaries
         run: |
